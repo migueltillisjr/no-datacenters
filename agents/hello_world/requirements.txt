@@ -1,0 +1,9 @@
+# python3.13
+fpdf2
+Pillow
+markdown
+python-dotenv
+qrcode[pil]>=8.0
+playwright
+# after installing requirements, also run once per environment:
+#   python -m playwright install --with-deps chromium

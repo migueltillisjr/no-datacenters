@@ -1,0 +1,46 @@
+@media print {
+  @page { size: 3.75in 2.25in; margin: 0; }
+
+  html, body {
+    width: 3.75in;
+    min-height: 2.25in;
+    background: white;
+    padding: 0;
+    margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-note { display: none; }
+
+  .card {
+    width: 3.5in;
+    height: 2in;
+    position: relative;
+    overflow: visible;
+    isolation: isolate;
+    box-shadow: none;
+    border-radius: 0;
+    page-break-after: always;
+    break-after: page;
+    margin: 0.125in;
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: -0.125in;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .front::after { background: var(--cream); }
+  .back::after { background: linear-gradient(160deg, var(--teal) 0%, var(--teal-dark) 100%); }
+
+  .card:last-of-type {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  body { display: block; gap: 0; padding: 0; }
+}

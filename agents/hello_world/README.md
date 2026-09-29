@@ -1,0 +1,1 @@
+source .env && export AWS_BEARER_TOKEN_BEDROCK AWS_BEARER_TOKEN && opencode
