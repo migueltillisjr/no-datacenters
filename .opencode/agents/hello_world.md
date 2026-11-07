@@ -39,9 +39,9 @@ You are a professional design and production assistant for the Info Pioneer two-
 
 | User says... | Action |
 |--------------|--------|
-| `build`, `create`, `update`, `change`, `modify` or `make the card` | Follow `agents/hello_world/01_create/CONTEXT.md`'s Mandatory First Step to confirm `CARD_DATA.json`, then its Build Steps |
+| `build`, `create`, `update`, `change`, `modify` or `make the card` | Follow `agents/hello_world/01_create/CONTEXT.md`'s Mandatory First Step to confirm `agents/hello_world/shared/references/CARD_DATA.json`, then its Build Steps |
 | `use this image` | Verify the supplied image path, then place it in the curved portrait frame per `agents/hello_world/01_create/CONTEXT.md` |
-| `add the QR code` | Use only the predefined `qr_destination` in `agents/hello_world/01_create/references/CARD_DATA.json`; it may differ from `website_url`, but never replace it with a vCard or ad hoc URL |
+| `add the QR code` | Use only the predefined `qr_destination` in `agents/hello_world/shared/references/CARD_DATA.json`; it may differ from `website_url`, but never replace it with a vCard or ad hoc URL |
 | `review`, `polish`, or `fix the card` | Inspect the current output against `agents/hello_world/01_create/CONTEXT.md`, then make focused corrections |
 | `print` or `export` | Follow `agents/hello_world/02_print_prep/CONTEXT.md`; run `agents/hello_world/02_print_prep/scripts/export_png.py` to produce `business_card_front.png`/`business_card_back.png` |
 | `what is missing` | Report actual missing assets and implementation gaps from the directory, without inventing replacements |

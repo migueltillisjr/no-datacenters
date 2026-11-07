@@ -1,10 +1,10 @@
-(- Run `bash start.sh` to install Ollama and OpenCode, start the Ollama server, and launch OpenCode
-- Ensure `start.sh` is executable with `chmod +x start.sh` before running
-- Ollama and OpenCode are installed automatically if missing
-- OpenCode uses the `qwen3:4b-instruct` model by default
-- Ollama server runs on port 11434 with 32768 context and 2048 MB RAM reserved
-- Wait up to 30 seconds for Ollama API to become ready
-- If Ollama fails to start, check `/tmp/ollama.log` for errors
-- Run `opencode --version` to verify installation after script completes
-- No dependency commands beyond `start.sh` are needed
-- After launch, OpenCode will use the configured model for all operations)
+## File Editing Rules
+
+When using the edit tool:
+
+1. Never retry the same failed edit repeatedly.
+2. If `oldString` matches multiple locations, read the surrounding lines and include enough neighboring content to make the match unique.
+3. Do not use `replaceAll=true` unless every occurrence should intentionally be changed.
+4. If an exact edit fails twice, use a shell command or script for a targeted modification instead.
+5. After editing, read or grep the relevant section to verify the change actually occurred.
+6. Never claim a file was updated unless the tool confirms the edit succeeded.
