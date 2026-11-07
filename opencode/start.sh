@@ -79,11 +79,11 @@ echo
 echo "Starting Ollama..."
 echo "Model:              $MODEL"
 echo "Context:            $OLLAMA_CONTEXT_LENGTH"
-echo "RAM reserve target: 2048 MB"
+echo "RAM reserve target: 10000 MB"
 echo "Parallel requests:  1"
 echo
 
-LLAMA_ARG_FIT_TARGET=2048 \
+LLAMA_ARG_FIT_TARGET=10000 \
 OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
@@ -154,6 +154,13 @@ if ! curl -sf http://localhost:11434/api/generate \
     -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
     >/dev/null; then
     echo "Warning: Ollama warm-up failed; the first prompt may be slower."
+fi
+
+echo "Warming up OpenCode harness..."
+if ! opencode run --model "ollama/$MODEL" \
+    "Reply with OK only. Do not modify files or run commands." \
+    >/dev/null 2>&1; then
+    echo "Warning: OpenCode harness warm-up failed; the first prompt may be slower."
 fi
 
 

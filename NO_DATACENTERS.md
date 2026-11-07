@@ -20,7 +20,7 @@ Start Ollama with the shared runtime settings in a separate terminal when
 using a harness manually:
 
 ```bash
-LLAMA_ARG_FIT_TARGET=2048 \
+LLAMA_ARG_FIT_TARGET=8138 \
 OLLAMA_CONTEXT_LENGTH=8192 \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
@@ -113,17 +113,32 @@ MODEL=qwen3:4b-instruct OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
 
 `start.sh` uses the same context, single-request parallelism, indefinite
 keep-alive, RAM fit target, and model warm-up settings as `voice_start.sh`.
+Each launcher also sends a harmless `Reply with OK` prompt through its harness
+before opening the interactive session, warming both the model and harness
+integration path.
+
+The dedicated OpenCode launcher is also available at
+[`opencode/start.sh`](./opencode/start.sh):
+
+```bash
+cd opencode
+./start.sh
+```
 
 ## 3. Claude Code with a local model
 
-Install Claude Code if needed, then launch it through Ollama:
+Install Claude Code if needed, then launch the configured local-model workflow:
 
 ```bash
-OLLAMA_CONTEXT_LENGTH=8192 \
-OLLAMA_NUM_PARALLEL=1 \
-OLLAMA_KEEP_ALIVE=-1 \
-LLAMA_ARG_FIT_TARGET=2048 \
-ollama launch claude --model qwen2.5-coder:7b
+cd claude_code
+./start.sh
+```
+
+Override the model or shared settings when needed:
+
+```bash
+cd claude_code
+MODEL=qwen2.5-coder:7b OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
 ```
 
 Ollama configures Claude Code to use its local Anthropic-compatible endpoint.
@@ -135,14 +150,18 @@ files; selecting a local model does not change that instruction mechanism.
 
 ## 4. Codex with a local model
 
-Install Codex CLI if needed, then launch it through Ollama:
+Install Codex CLI if needed, then launch the configured local-model workflow:
 
 ```bash
-OLLAMA_CONTEXT_LENGTH=8192 \
-OLLAMA_NUM_PARALLEL=1 \
-OLLAMA_KEEP_ALIVE=-1 \
-LLAMA_ARG_FIT_TARGET=2048 \
-ollama launch codex --model qwen2.5-coder:7b
+cd codex
+./start.sh
+```
+
+Override the model or shared settings when needed:
+
+```bash
+cd codex
+MODEL=qwen2.5-coder:7b OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
 ```
 
 Ollama creates a Codex launch profile that routes model requests to the local
@@ -159,14 +178,12 @@ Use `ollama launch codex --config` to configure without starting Codex, or
 
 ## 5. OpenCode with a local model
 
-For a standalone OpenCode session using the same coding model:
+For a standalone OpenCode session using the same coding model, use the
+dedicated launcher:
 
 ```bash
-OLLAMA_CONTEXT_LENGTH=8192 \
-OLLAMA_NUM_PARALLEL=1 \
-OLLAMA_KEEP_ALIVE=-1 \
-LLAMA_ARG_FIT_TARGET=2048 \
-ollama launch opencode --model qwen2.5-coder:7b
+cd opencode
+./start.sh
 ```
 
 The existing voice workflow uses OpenCode directly and defaults to
@@ -199,7 +216,7 @@ Use a smaller model for faster CPU responses:
 
 ```bash
 cd opencode
-MODEL=llama3.2:3b OLLAMA_CONTEXT_LENGTH=4096 ./voice_start.sh
+MODEL=llama3.2:3b OLLAMA_CONTEXT_LENGTH=8138 ./voice_start.sh
 ```
 
 Use a larger model only if the machine has enough memory and you accept slower
