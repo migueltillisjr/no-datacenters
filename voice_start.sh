@@ -11,6 +11,8 @@ AUDIO_INPUT="${AUDIO_INPUT:-:1}"
 MAX_RECORD_SECONDS="${MAX_RECORD_SECONDS:-60}"
 SILENCE_DURATION="${SILENCE_DURATION:-1.2}"
 SILENCE_THRESHOLD="${SILENCE_THRESHOLD:--35dB}"
+START_THRESHOLD="${START_THRESHOLD:--45dB}"
+OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
 WORK_DIR="${TMPDIR:-/tmp}/opencode-voice"
 FFMPEG_LOG_FILE="$WORK_DIR/ffmpeg.log"
 
@@ -89,10 +91,10 @@ sleep 1
 echo
 echo "Starting Ollama..."
 echo "Model: $MODEL"
-echo "CPU-focused context: 32768"
+echo "CPU-focused context: $OLLAMA_CONTEXT_LENGTH"
 
 LLAMA_ARG_FIT_TARGET=2048 \
-OLLAMA_CONTEXT_LENGTH=32768 \
+OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
 ollama serve > /tmp/ollama.log 2>&1 &
@@ -125,6 +127,16 @@ if ! ollama list | awk 'NR > 1 {print $1}' | grep -Fxq "$MODEL"; then
     ollama pull "$MODEL"
 fi
 
+# Load the model before the first voice command so the first response does not
+# pay the model startup cost. Keep it resident for the whole voice session.
+echo "Warming up Ollama model..."
+if ! curl -sf http://localhost:11434/api/generate \
+    -H 'Content-Type: application/json' \
+    -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
+    >/dev/null; then
+    echo "Warning: Ollama warm-up failed; the first command may be slower."
+fi
+
 echo
 echo "Voice control is ready."
 echo "Speak after pressing Enter; recording stops after ${SILENCE_DURATION}s of silence."
@@ -153,7 +165,7 @@ while true; do
         -f avfoundation \
         -i "$AUDIO_INPUT" \
         -t "$MAX_RECORD_SECONDS" \
-        -af "silencedetect=noise=${SILENCE_THRESHOLD}:d=${SILENCE_DURATION},silenceremove=start_periods=1:start_duration=0.2:start_threshold=${SILENCE_THRESHOLD}:stop_periods=1:stop_duration=${SILENCE_DURATION}:stop_threshold=${SILENCE_THRESHOLD}" \
+        -af "silencedetect=noise=${SILENCE_THRESHOLD}:d=${SILENCE_DURATION},silenceremove=start_periods=1:start_duration=0.05:start_threshold=${START_THRESHOLD}:stop_periods=1:stop_duration=${SILENCE_DURATION}:stop_threshold=${SILENCE_THRESHOLD}" \
         -ar 16000 \
         -ac 1 \
         -c:a pcm_s16le \

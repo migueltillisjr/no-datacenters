@@ -45,6 +45,8 @@ AUDIO_INPUT=:1 \
 MAX_RECORD_SECONDS=60 \
 SILENCE_DURATION=1.2 \
 SILENCE_THRESHOLD=-35dB \
+START_THRESHOLD=-45dB \
+OLLAMA_CONTEXT_LENGTH=8192 \
 ./voice_start.sh
 ```
 
@@ -55,6 +57,13 @@ microphone, `AUDIO_INPUT=:1` for the MacBook Pro microphone, or
 `MAX_RECORD_SECONDS` prevents an unattended recording from running forever.
 Increase `SILENCE_DURATION` if the command is being cut off between phrases,
 or lower `SILENCE_THRESHOLD` if background noise is being mistaken for speech.
+`START_THRESHOLD` controls how quickly speech starts being retained; lower it
+if the first words are still missing.
+`OLLAMA_CONTEXT_LENGTH` controls the amount of context Ollama allocates. The
+default of 8192 is faster and lighter on CPU than the previous 32768 setting;
+increase it if longer coding conversations need more context.
+The script warms the selected model before recording so the first response does
+not include model-load time.
 While recording, `ffmpeg` prints `silence_start` and `silence_end` events. The
 same diagnostics are saved to `$TMPDIR/opencode-voice/ffmpeg.log` (usually a
 macOS `/var/folders/...` path).
