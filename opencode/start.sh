@@ -2,7 +2,8 @@
 
 set -e
 
-MODEL="qwen3:4b-instruct"
+MODEL="${MODEL:-qwen3:4b-instruct}"
+OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
 
 # -----------------------------
 # Install Ollama if necessary
@@ -77,13 +78,13 @@ sleep 1
 echo
 echo "Starting Ollama..."
 echo "Model:              $MODEL"
-echo "Context:            32768"
+echo "Context:            $OLLAMA_CONTEXT_LENGTH"
 echo "RAM reserve target: 2048 MB"
 echo "Parallel requests:  1"
 echo
 
 LLAMA_ARG_FIT_TARGET=2048 \
-OLLAMA_CONTEXT_LENGTH=32768 \
+OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
 ollama serve > /tmp/ollama.log 2>&1 &
@@ -142,6 +143,17 @@ else
     echo
     echo "$MODEL already installed."
 
+fi
+
+# Load the model before launching OpenCode so the first prompt does not pay
+# the model startup cost. Keep it resident for the whole session.
+echo
+echo "Warming up Ollama model..."
+if ! curl -sf http://localhost:11434/api/generate \
+    -H 'Content-Type: application/json' \
+    -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
+    >/dev/null; then
+    echo "Warning: Ollama warm-up failed; the first prompt may be slower."
 fi
 
 

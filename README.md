@@ -1,99 +1,60 @@
 # no-datacenters
 
-Run OpenCode with local Ollama models and local voice transcription. No cloud
-model or hosted speech-to-text service is required.
+## Markdown instructions for coding agents
 
-## Voice control
+Codex uses `AGENTS.md` files as repository and directory instructions. Codex
+loads instructions from the global Codex configuration, the repository root,
+and each directory between the repository root and the current working
+directory. More-specific files are applied after broader files.
 
-`voice_start.sh` starts Ollama, installs the local voice dependencies when
-needed, records microphone input, transcribes it with `whisper.cpp`, and sends
-each command to OpenCode.
-
-### Requirements
-
-- macOS
-- [Homebrew](https://brew.sh)
-- A microphone
-- OpenCode and Ollama (the script can install them)
-
-### Start
+For the example agent in this repository, start Codex from:
 
 ```bash
-chmod +x voice_start.sh
-./voice_start.sh
+cd codex/agents/hello_world
+codex
 ```
 
-Press Enter to start listening. Press Enter again to stop recording manually,
-or let the script stop after 1.2 seconds of silence. The gathered transcription
-is then sent as a prompt to the local `qwen3:4b-instruct` Ollama model through
-OpenCode. Press `Ctrl-C` to exit.
+The instructions are in
+[`codex/agents/hello_world/AGENTS.md`](./codex/agents/hello_world/AGENTS.md).
+Files such as `README.md` and `CONTEXT.md` are not automatically loaded as
+agent instructions; reference them from `AGENTS.md` or ask the agent to read
+them.
 
-The script installs or uses:
+### Claude Code compatibility
 
-- [Ollama](https://ollama.com) for local CPU model inference
-- [OpenCode](https://opencode.ai) for the coding-agent workflow
-- [whisper.cpp](https://github.com/ggml-org/whisper.cpp) for local speech-to-text
-- `ffmpeg` for macOS microphone capture
+Claude Code uses `CLAUDE.md` and `CLAUDE.local.md` for automatically loaded
+project instructions. It does not automatically treat `AGENTS.md` as its
+instruction file, so the Codex file above will not control Claude Code by
+itself. To share guidance, keep equivalent instructions in both files, or
+explicitly ask Claude Code to read the Codex Markdown file.
 
-### Configuration
+See the [Codex Prompting Guide](https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide)
+and [Claude Code memory documentation](https://docs.anthropic.com/en/docs/claude-code/memory)
+for the tool-specific behavior.
 
-Environment variables can override the defaults:
+### OpenCode compatibility
 
-```bash
-MODEL=qwen3:4b-instruct \
-AUDIO_INPUT=:1 \
-MAX_RECORD_SECONDS=60 \
-SILENCE_DURATION=1.2 \
-SILENCE_THRESHOLD=-35dB \
-START_THRESHOLD=-45dB \
-OLLAMA_CONTEXT_LENGTH=8192 \
-./voice_start.sh
+OpenCode also loads `AGENTS.md` files for persistent project instructions, so
+the same repository guidance can be shared with Codex and OpenCode. OpenCode
+does not use `CLAUDE.md` as a fallback.
+
+OpenCode reusable agents are a separate feature. Define one as a Markdown file
+under `.opencode/agents/` with frontmatter such as `description` and `mode`,
+followed by the agent's system prompt:
+
+```markdown
+---
+description: Answers simple greetings
+mode: subagent
+---
+
+Respond to a greeting with `Hello, world!`.
 ```
 
-For the detected audio devices, use `AUDIO_INPUT=:0` for the iPhone
-microphone, `AUDIO_INPUT=:1` for the MacBook Pro microphone, or
-`AUDIO_INPUT=:2` for AirPods Pro.
+The filename becomes the agent name. For example,
+`.opencode/agents/hello_world.md` creates an OpenCode agent named
+`hello_world`. The `AGENTS.md` file controls project-wide instructions; it is
+not itself a reusable OpenCode agent definition.
 
-`MAX_RECORD_SECONDS` prevents an unattended recording from running forever.
-Increase `SILENCE_DURATION` if the command is being cut off between phrases,
-or lower `SILENCE_THRESHOLD` if background noise is being mistaken for speech.
-`START_THRESHOLD` controls how quickly speech starts being retained; lower it
-if the first words are still missing.
-`OLLAMA_CONTEXT_LENGTH` controls the amount of context Ollama allocates. The
-default of 8192 is faster and lighter on CPU than the previous 32768 setting;
-increase it if longer coding conversations need more context.
-The script warms the selected model before recording so the first response does
-not include model-load time.
-While recording, `ffmpeg` prints `silence_start` and `silence_end` events. The
-same diagnostics are saved to `$TMPDIR/opencode-voice/ffmpeg.log` (usually a
-macOS `/var/folders/...` path).
-
-If Whisper prints `[BLANK_AUDIO]`, the script skips OpenCode because no usable
-prompt was recognized. On macOS, list available microphone devices with:
-
-```bash
-ffmpeg -f avfoundation -list_devices true -i ""
-```
-
-Then select the microphone index, for example:
-
-```bash
-# use airpods for auidio input
-AUDIO_INPUT=:1 ./voice_start.sh
-```
-
-The Whisper model is downloaded to:
-
-```text
-~/.cache/whisper.cpp/ggml-base.en.bin
-```
-
-To use a different model file or download URL:
-
-```bash
-WHISPER_MODEL_PATH=/path/to/model.bin \
-WHISPER_MODEL_URL=https://example.com/model.bin \
-./voice_start.sh
-```
-
-The original non-voice startup flow remains available in `start.sh`.
+See the [OpenCode instructions documentation](https://opencode.ai/v2/docs/instructions)
+and [OpenCode agents documentation](https://opencode.ai/v2/docs/agents).
