@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.2 - 2026-11-07
+
+### Added
+
+- Added `LANGFUSE.md` setup instructions to each harness directory for sending
+  traces from Claude Code, Codex, GitHub Copilot CLI, and OpenCode.
+- Added `start_tracing.sh` wrappers for each harness to start Langfuse, apply
+  tracing configuration, and launch the selected harness.
+
 ## 1.0.1 - 2026-11-07
 
 ### Added

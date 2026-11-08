@@ -63,6 +63,7 @@ env.bak/
 venv.bak/
 .claude_code/
 .codex/
+.codex_tracing_home/
 .copilot/
 .opencode_venv/
 
