@@ -1,6 +1,6 @@
 - How to do integrations
-    - MCP
-    - Scripts, python3, virtual env of the same name of directory (e.g. .cluade_code) in respective directories
+    [x] MCP
+    [x] Scripts, python3, virtual env of the same name of directory (e.g. .cluade_code) in respective directories
         ```markdown
         - Use Python 3.
         - Keep scripts in their respective integration directories.
