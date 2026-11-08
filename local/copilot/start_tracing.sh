@@ -12,6 +12,7 @@ if [ ! -f "$LANGFUSE_ENV" ]; then
 fi
 
 source "$LANGFUSE_ENV"
+"$REPO_DIR/langfuse/start.sh"
 : "${LANGFUSE_PUBLIC_KEY:?Set LANGFUSE_PUBLIC_KEY in langfuse/.env}"
 : "${LANGFUSE_SECRET_KEY:?Set LANGFUSE_SECRET_KEY in langfuse/.env}"
 if [[ "$LANGFUSE_PUBLIC_KEY" == *CHANGEME* || "$LANGFUSE_SECRET_KEY" == *CHANGEME* ]]; then
@@ -23,8 +24,6 @@ export COPILOT_OTEL_ENABLED=true
 export OTEL_EXPORTER_OTLP_ENDPOINT="$LANGFUSE_BASE_URL/api/public/otel"
 export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic $(printf '%s' "$LANGFUSE_PUBLIC_KEY:$LANGFUSE_SECRET_KEY" | base64),x-langfuse-ingestion-version=4"
 export OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT="${OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT:-true}"
-
-"$REPO_DIR/langfuse/start.sh"
 
 if ! command -v copilot >/dev/null 2>&1; then
     if ! command -v npm >/dev/null 2>&1; then

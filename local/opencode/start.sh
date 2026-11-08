@@ -53,6 +53,22 @@ else
     echo "OpenCode already installed."
 fi
 
+# OpenCode 2 uses `plugins`; OpenCode 1.18.29+ uses `plugin`. Set the
+# observability plugin after installation so the warm-up and user session both
+# load the same Langfuse configuration.
+if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
+    OPENCODE_VERSION="$(opencode --version 2>/dev/null | head -n 1 | grep -Eo '[0-9]+(\.[0-9]+)+' | head -n 1 || true)"
+    OPENCODE_MAJOR="${OPENCODE_VERSION%%.*}"
+
+    if [ "$OPENCODE_MAJOR" -ge 2 ] 2>/dev/null; then
+        export OPENCODE_CONFIG_CONTENT='{"plugins":["@langfuse/opencode-observability-plugin@latest"]}'
+    else
+        export OPENCODE_CONFIG_CONTENT='{"plugin":["@langfuse/opencode-observability-plugin@latest"]}'
+    fi
+
+    echo "Langfuse tracing enabled for OpenCode $OPENCODE_VERSION."
+fi
+
 
 # -----------------------------
 # Cleanup

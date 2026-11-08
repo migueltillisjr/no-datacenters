@@ -13,6 +13,7 @@ fi
 
 # Load the env file without exporting unrelated database credentials.
 source "$LANGFUSE_ENV"
+"$REPO_DIR/langfuse/start.sh"
 : "${LANGFUSE_PUBLIC_KEY:?Set LANGFUSE_PUBLIC_KEY in langfuse/.env}"
 : "${LANGFUSE_SECRET_KEY:?Set LANGFUSE_SECRET_KEY in langfuse/.env}"
 if [[ "$LANGFUSE_PUBLIC_KEY" == *CHANGEME* || "$LANGFUSE_SECRET_KEY" == *CHANGEME* ]]; then
@@ -21,8 +22,6 @@ if [[ "$LANGFUSE_PUBLIC_KEY" == *CHANGEME* || "$LANGFUSE_SECRET_KEY" == *CHANGEM
 fi
 LANGFUSE_BASE_URL="${LANGFUSE_BASE_URL:-http://localhost:3000}"
 export TRACE_TO_LANGFUSE=true LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY LANGFUSE_BASE_URL
-
-"$REPO_DIR/langfuse/start.sh"
 
 if ! command -v claude >/dev/null 2>&1; then
     if ! command -v npm >/dev/null 2>&1; then

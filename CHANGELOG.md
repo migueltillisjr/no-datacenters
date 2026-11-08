@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.3 - 2026-11-08
+
+### Fixed
+
+- Updated OpenCode tracing startup to configure the Langfuse plugin using the
+  correct `plugins` or `plugin` key for the installed OpenCode major version.
+- Applied the tracing configuration before both the OpenCode warm-up request
+  and the interactive session.
+- Wrote the Langfuse credentials from `langfuse/.env` to OpenCode's documented
+  `opencode-langfuse.json` file with restrictive permissions before launch.
+- Installed the Langfuse AI skill from `github.com/langfuse/skills` under the
+  repository-level `.opencode/skills/langfuse/` directory.
+- Added a repository-level `opencode.json` plugin declaration so tracing remains
+  enabled when OpenCode is launched through Ollama.
+
 ## 1.0.2 - 2026-11-07
 
 ### Added
