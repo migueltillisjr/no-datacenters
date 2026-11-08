@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5 - 2026-11-08
+
+### Progress
+
+- validated that codex and opencode send traces to langfuse
+
 ## 1.0.4 - 2026-11-08
 
 ### Fixed
