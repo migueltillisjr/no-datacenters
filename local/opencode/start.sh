@@ -2,6 +2,15 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/.opencode_venv"
+
+if [ ! -x "$VENV_DIR/bin/python" ]; then
+    "$SCRIPT_DIR/setup_python.sh"
+fi
+
+source "$VENV_DIR/bin/activate"
+
 MODEL="${MODEL:-qwen3:4b-instruct}"
 OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
 

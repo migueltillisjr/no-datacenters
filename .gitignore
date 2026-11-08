@@ -61,6 +61,10 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.claude_code/
+.codex/
+.copilot/
+.opencode_venv/
 
 # Jupyter Notebook
 .ipynb_checkpoints
