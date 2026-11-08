@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.0.4 - 2026-11-08
+
+### Fixed
+
+- Fixed OpenCode `provider.transport` connection failures by binding Ollama to
+  `127.0.0.1:11434` and using the same endpoint in the OpenCode provider config.
+- Changed the launcher to execute OpenCode directly so the Ollama server stays
+  available for the complete traced session.
+- Explicitly selected the harness-local `opencode.json` from
+  `start_tracing.sh`.
+- Fixed interactive OpenCode startup by configuring the model through
+  `OPENCODE_CONFIG_CONTENT` instead of passing unsupported `--model` flags.
+- Updated the OpenCode launcher to reuse a healthy existing Ollama server,
+  wait for an already-starting server, and only stop Ollama when the launcher
+  started it.
+- Bounded the OpenCode warm-up request and made it non-blocking when it times
+  out or fails, allowing the interactive session to start.
+- Enabled direct `start.sh` launches to load valid Langfuse credentials and
+  tracing configuration automatically from `langfuse/.env`.
+- Updated the OpenCode 2 Ollama provider to the native OpenCode-compatible
+  provider package and increased the managed Ollama context window to improve
+  native tool-call handling.
+
 ## 1.0.3 - 2026-11-08
 
 ### Fixed
@@ -12,8 +35,10 @@
   `opencode-langfuse.json` file with restrictive permissions before launch.
 - Installed the Langfuse AI skill from `github.com/langfuse/skills` under the
   repository-level `.opencode/skills/langfuse/` directory.
-- Added a repository-level `opencode.json` plugin declaration so tracing remains
-  enabled when OpenCode is launched through Ollama.
+- Added a harness-local `opencode.json` plugin and provider declaration so
+  tracing remains enabled when OpenCode is launched through Ollama.
+- Fixed OpenCode's Ollama launch path to use an explicit loopback endpoint and
+  keep the Ollama process alive under the same launcher until OpenCode exits.
 
 ## 1.0.2 - 2026-11-07
 

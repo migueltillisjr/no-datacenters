@@ -44,6 +44,9 @@ echo "Langfuse credentials configured at $OPENCODE_LANGFUSE_CONFIG."
 # The harness start script selects `plugins` for OpenCode 2 and `plugin` for
 # OpenCode 1.18.29+, after ensuring the CLI is installed.
 export TRACE_TO_LANGFUSE=true
+# The launcher starts from the repository root, so explicitly select the
+# harness-local OpenCode config instead of relying on cwd-based discovery.
+export OPENCODE_CONFIG="opencode.json"
 
 cd "$REPO_DIR"
 exec "$SCRIPT_DIR/start.sh"

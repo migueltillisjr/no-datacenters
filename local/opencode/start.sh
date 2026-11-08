@@ -4,6 +4,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.opencode_venv"
+REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+LANGFUSE_ENV="$REPO_DIR/langfuse/.env"
 
 if [ ! -x "$VENV_DIR/bin/python" ]; then
     "$SCRIPT_DIR/setup_python.sh"
@@ -12,7 +14,55 @@ fi
 source "$VENV_DIR/bin/activate"
 
 MODEL="${MODEL:-qwen3:4b-instruct}"
-OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
+OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8000}"
+OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
+OLLAMA_BASE_URL="http://${OLLAMA_HOST%/}/v1"
+OPENCODE_WARMUP_TIMEOUT="${OPENCODE_WARMUP_TIMEOUT:-10}"
+
+# Direct starts should use the local Langfuse project automatically when its
+# project keys are configured. start_tracing.sh already exports this flag and
+# credentials, so this remains idempotent for both entry points.
+if [ "${TRACE_TO_LANGFUSE:-}" != "true" ] && [ -f "$LANGFUSE_ENV" ]; then
+    source "$LANGFUSE_ENV"
+    if [ -n "${LANGFUSE_PUBLIC_KEY:-}" ] \
+        && [ -n "${LANGFUSE_SECRET_KEY:-}" ] \
+        && [[ "$LANGFUSE_PUBLIC_KEY" != *CHANGEME* ]] \
+        && [[ "$LANGFUSE_SECRET_KEY" != *CHANGEME* ]]; then
+        export TRACE_TO_LANGFUSE=true
+    fi
+fi
+
+if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
+    : "${LANGFUSE_PUBLIC_KEY:?Set LANGFUSE_PUBLIC_KEY in langfuse/.env}"
+    : "${LANGFUSE_SECRET_KEY:?Set LANGFUSE_SECRET_KEY in langfuse/.env}"
+    LANGFUSE_BASEURL="${LANGFUSE_BASEURL:-${LANGFUSE_BASE_URL:-http://localhost:3000}}"
+    export LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY LANGFUSE_BASEURL
+    export LANGFUSE_ENVIRONMENT="${LANGFUSE_ENVIRONMENT:-development}"
+    export LANGFUSE_USER_ID="${LANGFUSE_USER_ID:-harness}"
+    export OPENCODE_CONFIG="opencode.json"
+
+    OPENCODE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+    OPENCODE_LANGFUSE_CONFIG="$OPENCODE_CONFIG_DIR/opencode-langfuse.json"
+    mkdir -p "$OPENCODE_CONFIG_DIR"
+    umask 077
+    printf '{\n  "publicKey": "%s",\n  "secretKey": "%s",\n  "baseUrl": "%s",\n  "environment": "%s",\n  "userId": "%s"\n}\n' \
+        "$LANGFUSE_PUBLIC_KEY" \
+        "$LANGFUSE_SECRET_KEY" \
+        "$LANGFUSE_BASEURL" \
+        "$LANGFUSE_ENVIRONMENT" \
+        "$LANGFUSE_USER_ID" \
+        > "$OPENCODE_LANGFUSE_CONFIG"
+    chmod 600 "$OPENCODE_LANGFUSE_CONFIG"
+
+    if [ -x "$REPO_DIR/langfuse/start.sh" ]; then
+        "$REPO_DIR/langfuse/start.sh"
+    fi
+    echo "Langfuse tracing enabled."
+fi
+
+export OLLAMA_HOST
+export OPENCODE_MODEL="ollama/$MODEL"
+OLLAMA_API_URL="http://${OLLAMA_HOST%/}"
 
 # -----------------------------
 # Install Ollama if necessary
@@ -61,9 +111,9 @@ if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
     OPENCODE_MAJOR="${OPENCODE_VERSION%%.*}"
 
     if [ "$OPENCODE_MAJOR" -ge 2 ] 2>/dev/null; then
-        export OPENCODE_CONFIG_CONTENT='{"plugins":["@langfuse/opencode-observability-plugin@latest"]}'
+        export OPENCODE_CONFIG_CONTENT="{\"model\":\"$OPENCODE_MODEL\",\"plugins\":[\"@langfuse/opencode-observability-plugin@latest\"],\"providers\":{\"ollama\":{\"name\":\"Ollama\",\"package\":\"@opencode/ai/providers/openai-compatible\",\"settings\":{\"baseURL\":\"$OLLAMA_BASE_URL\",\"apiKey\":\"ollama\"}}}}"
     else
-        export OPENCODE_CONFIG_CONTENT='{"plugin":["@langfuse/opencode-observability-plugin@latest"]}'
+        export OPENCODE_CONFIG_CONTENT="{\"model\":\"$OPENCODE_MODEL\",\"plugin\":[\"@langfuse/opencode-observability-plugin@latest\"],\"provider\":{\"ollama\":{\"npm\":\"@ai-sdk/openai-compatible\",\"options\":{\"baseURL\":\"$OLLAMA_BASE_URL\",\"apiKey\":\"ollama\"}}}}"
     fi
 
     echo "Langfuse tracing enabled for OpenCode $OPENCODE_VERSION."
@@ -74,11 +124,16 @@ fi
 # Cleanup
 # -----------------------------
 OLLAMA_PID=""
+OLLAMA_STARTED_BY_SCRIPT=false
+
+ollama_ready() {
+    curl -sf "$OLLAMA_API_URL/api/tags" >/dev/null 2>&1
+}
 
 cleanup() {
     echo
 
-    if [ -n "$OLLAMA_PID" ]; then
+    if [ "$OLLAMA_STARTED_BY_SCRIPT" = true ] && [ -n "$OLLAMA_PID" ]; then
         echo "Stopping Ollama..."
         kill "$OLLAMA_PID" 2>/dev/null || true
     fi
@@ -88,69 +143,73 @@ trap cleanup EXIT INT TERM
 
 
 # -----------------------------
-# Stop existing Ollama server
-# -----------------------------
-echo "Stopping existing Ollama server..."
-
-pkill -f "ollama serve" 2>/dev/null || true
-
-sleep 1
-
-
-# -----------------------------
-# Start Ollama
+# Reuse or start Ollama
 # -----------------------------
 echo
-echo "Starting Ollama..."
-echo "Model:              $MODEL"
-echo "Context:            $OLLAMA_CONTEXT_LENGTH"
-echo "RAM reserve target: 10000 MB"
-echo "Parallel requests:  1"
-echo
+echo "Checking Ollama at $OLLAMA_API_URL..."
 
-LLAMA_ARG_FIT_TARGET=10000 \
-OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
-OLLAMA_NUM_PARALLEL=1 \
-OLLAMA_KEEP_ALIVE=-1 \
-ollama serve > /tmp/ollama.log 2>&1 &
+if ollama_ready; then
+    echo "Ollama is already running; reusing the existing server."
+elif pgrep -f '[o]llama serve' >/dev/null 2>&1; then
+    echo "Ollama is starting; waiting for the existing server..."
 
-OLLAMA_PID=$!
+    for i in {1..30}; do
+        if ollama_ready; then
+            break
+        fi
+        sleep 1
+    done
 
-
-# -----------------------------
-# Wait for Ollama API
-# -----------------------------
-echo "Waiting for Ollama API..."
-
-for i in {1..30}; do
-
-    if curl -sf http://localhost:11434/api/tags >/dev/null; then
-        break
+    if ! ollama_ready; then
+        echo "An Ollama server process exists but did not become ready at $OLLAMA_API_URL." >&2
+        exit 1
     fi
 
-    if ! kill -0 "$OLLAMA_PID" 2>/dev/null; then
+    echo "Ollama ready; reusing the existing server."
+else
+    echo "Ollama is not running; starting a managed server."
+    echo "Model:              $MODEL"
+    echo "Context:            $OLLAMA_CONTEXT_LENGTH"
+    echo "Endpoint:           http://$OLLAMA_HOST"
+    echo "RAM reserve target: 4000 MB"
+    echo "Parallel requests:  1"
+
+    LLAMA_ARG_FIT_TARGET=4000 \
+    OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
+    OLLAMA_NUM_PARALLEL=1 \
+    OLLAMA_KEEP_ALIVE=-1 \
+    ollama serve > /tmp/ollama.log 2>&1 &
+
+    OLLAMA_PID=$!
+    OLLAMA_STARTED_BY_SCRIPT=true
+
+    echo "Waiting for Ollama API..."
+    for i in {1..30}; do
+        if ollama_ready; then
+            break
+        fi
+
+        if ! kill -0 "$OLLAMA_PID" 2>/dev/null; then
+            echo
+            echo "Ollama failed to start."
+            echo
+            cat /tmp/ollama.log
+            exit 1
+        fi
+
+        sleep 1
+    done
+
+    if ! ollama_ready; then
         echo
-        echo "Ollama failed to start."
+        echo "Ollama did not become ready at $OLLAMA_API_URL."
         echo
         cat /tmp/ollama.log
         exit 1
     fi
 
-    sleep 1
-
-done
-
-
-# Final readiness check
-if ! curl -sf http://localhost:11434/api/tags >/dev/null; then
-    echo
-    echo "Ollama did not become ready."
-    echo
-    cat /tmp/ollama.log
-    exit 1
+    echo "Ollama ready."
 fi
-
-echo "Ollama ready."
 
 
 # -----------------------------
@@ -174,7 +233,7 @@ fi
 # the model startup cost. Keep it resident for the whole session.
 echo
 echo "Warming up Ollama model..."
-if ! curl -sf http://localhost:11434/api/generate \
+if ! curl -sf "$OLLAMA_API_URL/api/generate" \
     -H 'Content-Type: application/json' \
     -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
     >/dev/null; then
@@ -182,10 +241,30 @@ if ! curl -sf http://localhost:11434/api/generate \
 fi
 
 echo "Warming up OpenCode harness..."
-if ! opencode run --model "ollama/$MODEL" \
+WARMUP_LOG="/tmp/opencode-warmup.log"
+opencode run --standalone --model "ollama/$MODEL" \
     "Reply with OK only. Do not modify files or run commands." \
-    >/dev/null 2>&1; then
-    echo "Warning: OpenCode harness warm-up failed; the first prompt may be slower."
+    >"$WARMUP_LOG" 2>&1 &
+WARMUP_PID=$!
+WARMUP_FINISHED=false
+
+for i in $(seq 1 "$OPENCODE_WARMUP_TIMEOUT"); do
+    if ! kill -0 "$WARMUP_PID" 2>/dev/null; then
+        WARMUP_FINISHED=true
+        break
+    fi
+    sleep 1
+done
+
+if [ "$WARMUP_FINISHED" = false ]; then
+    kill "$WARMUP_PID" 2>/dev/null || true
+    wait "$WARMUP_PID" 2>/dev/null || true
+    echo "Warning: OpenCode warm-up exceeded ${OPENCODE_WARMUP_TIMEOUT}s; continuing to the interactive session."
+elif wait "$WARMUP_PID"; then
+    echo "OpenCode harness warm-up complete."
+else
+    echo "Warning: OpenCode harness warm-up failed; continuing to the interactive session."
+    sed -n '1,80p' "$WARMUP_LOG" 2>/dev/null || true
 fi
 
 
@@ -209,4 +288,4 @@ echo "Launching OpenCode..."
 echo "Model: $MODEL"
 echo
 
-ollama launch opencode --model "$MODEL"
+exec opencode

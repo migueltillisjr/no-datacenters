@@ -6,8 +6,9 @@ compactions, failures, and session metadata to Langfuse.
 The Langfuse AI skill from `github.com/langfuse/skills` is installed at the
 repository-level `.opencode/skills/langfuse/` directory. OpenCode discovers it
 because `start_tracing.sh` launches the harness from the repository root. The
-repository-level `opencode.json` also declares the Langfuse observability
-plugin, so the plugin remains enabled when OpenCode is launched through Ollama.
+harness-local `opencode.json` is selected explicitly by the launcher and
+declares the Langfuse plugin and loopback Ollama provider, so the plugin
+remains enabled when OpenCode is launched through Ollama.
 
 For an automated setup that starts Langfuse, configures the version-appropriate
 OpenCode plugin key, and launches OpenCode, run:
