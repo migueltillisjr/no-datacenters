@@ -36,6 +36,10 @@ Open [http://localhost:3000](http://localhost:3000), create the first user,
 and create a Langfuse organization and project. Langfuse does not provide a
 default login.
 
+For harness tracing setup, see [PLUGIN_SETUP.md](./PLUGIN_SETUP.md). The
+Claude Code, Codex, and OpenCode integrations use Langfuse plugins; GitHub
+Copilot CLI uses its native OpenTelemetry exporter.
+
 ## Container operations
 
 ```bash
