@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.0.16 - 2026-11-09
+
+### Fixed
+
+- Made launcher startup stop Ollama instances started through the macOS app as
+  well as command-line `ollama serve` processes before starting a fresh server.
+
+## 1.0.15 - 2026-11-09
+
+### Changed
+
+- Updated active harness launchers to stop an existing Ollama server on the
+  configured port and start a fresh launcher-owned process.
+- Scoped process detection to the configured listening port and verified the
+  process is `ollama serve` before stopping it.
+
+## 1.0.14 - 2026-11-09
+
+### Fixed
+
+- Added connection and maximum-duration limits to Ollama warm-up requests so
+  a slow or non-responsive model cannot block harness startup indefinitely.
+
+## 1.0.13 - 2026-11-09
+
+### Fixed
+
+- Made all regular harness `start.sh` launchers explicitly non-tracing by
+  clearing inherited Langfuse and OTLP settings.
+- Isolated Claude Code's tracing plugin configuration so normal Claude Code
+  launches do not reuse the tracing setup.
+
 ## 1.0.12 - 2026-11-09
 
 ### Fixed
@@ -7,6 +39,8 @@
 - Kept Langfuse container startup confined to the dedicated `start_tracing.sh`
   wrappers, so regular harness launchers do not require Docker when tracing is
   configured against an already-running endpoint.
+- Made the default OpenCode configuration non-tracing, preventing a plain
+  `start.sh` launch from waiting for Langfuse to be available.
 
 ### Changed
 

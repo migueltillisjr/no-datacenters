@@ -15,11 +15,20 @@ fi
 
 source "$VENV_DIR/bin/activate"
 
+# Regular launches are deliberately non-tracing. The tracing wrapper supplies
+# a dedicated CODEX_HOME and explicitly enables the observability plugin.
+if [ "${TRACE_TO_LANGFUSE:-false}" != "true" ]; then
+    unset TRACE_TO_LANGFUSE LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY \
+        LANGFUSE_BASE_URL LANGFUSE_BASEURL \
+        OTEL_EXPORTER_OTLP_ENDPOINT OTEL_EXPORTER_OTLP_HEADERS
+fi
+
 MODEL="${MODEL:-qwen3:4b-instruct}"
 OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
 LLAMA_ARG_FIT_TARGET="${LLAMA_ARG_FIT_TARGET:-10000}"
 OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
 OLLAMA_LOG_FILE="${OLLAMA_LOG_FILE:-${TMPDIR:-/tmp}/ollama-codex.log}"
+OLLAMA_WARMUP_TIMEOUT="${OLLAMA_WARMUP_TIMEOUT:-30}"
 source "$SCRIPT_DIR/../lib/ollama.sh"
 export OLLAMA_HOST
 
@@ -56,7 +65,7 @@ LLAMA_ARG_FIT_TARGET="$LLAMA_ARG_FIT_TARGET" \
 OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
-    ollama_start_or_reuse
+    ollama_start_fresh
 
 if ! ollama list | awk 'NR > 1 {print $1}' | grep -Fxq "$MODEL"; then
     echo "Downloading Ollama model $MODEL..."
@@ -65,6 +74,8 @@ fi
 
 echo "Warming up Ollama model..."
 if ! curl -sf "$OLLAMA_API_URL/api/generate" \
+    --connect-timeout 5 \
+    --max-time "$OLLAMA_WARMUP_TIMEOUT" \
     -H 'Content-Type: application/json' \
     -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
     >/dev/null; then

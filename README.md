@@ -119,16 +119,17 @@ plugin or OpenTelemetry exporter. See [langfuse/README.md](./langfuse/README.md)
 and [langfuse/PLUGIN_SETUP.md](./langfuse/PLUGIN_SETUP.md) for the complete
 setup.
 
-If Langfuse is already running elsewhere, or you only want the OpenCode
-launcher to configure tracing, use `start.sh` directly. It does not start or
-stop Docker containers:
+If Langfuse is already running elsewhere, or you explicitly want the OpenCode
+launcher to configure tracing, set `TRACE_TO_LANGFUSE=true` when using
+`start.sh`. It does not start or stop Docker containers:
 
 ```bash
 TRACE_TO_LANGFUSE=true ./local/opencode/start.sh
 ```
 
 Set `LANGFUSE_BASEURL` to the reachable Langfuse endpoint when it is not
-`http://localhost:3000`.
+`http://localhost:3000`. A plain `./local/opencode/start.sh` uses a
+non-tracing configuration and does not contact Langfuse.
 
 To stop the Langfuse containers while keeping their named volumes:
 

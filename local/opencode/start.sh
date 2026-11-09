@@ -9,7 +9,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.opencode_venv"
 REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-LANGFUSE_ENV="$REPO_DIR/langfuse/.env"
 
 if [ ! -x "$VENV_DIR/bin/python" ]; then
     "$SCRIPT_DIR/setup_python.sh"
@@ -17,15 +16,25 @@ fi
 
 source "$VENV_DIR/bin/activate"
 
+# Regular launches are deliberately non-tracing. The tracing wrapper or an
+# explicit TRACE_TO_LANGFUSE=true opt-in is required to contact Langfuse.
+if [ "${TRACE_TO_LANGFUSE:-false}" != "true" ]; then
+    unset TRACE_TO_LANGFUSE LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY \
+        LANGFUSE_BASE_URL LANGFUSE_BASEURL LANGFUSE_ENVIRONMENT \
+        LANGFUSE_USER_ID
+fi
+
 MODEL="${MODEL:-qwen3:4b-instruct}"
 OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8000}"
 OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
 OLLAMA_BASE_URL="http://${OLLAMA_HOST%/}/v1"
 OPENCODE_WARMUP_TIMEOUT="${OPENCODE_WARMUP_TIMEOUT:-10}"
 OLLAMA_LOG_FILE="${OLLAMA_LOG_FILE:-${TMPDIR:-/tmp}/ollama-opencode.log}"
+OLLAMA_WARMUP_TIMEOUT="${OLLAMA_WARMUP_TIMEOUT:-30}"
 
-# Langfuse .env contains credentials, but sourcing it must not replace the
-# launcher-selected model or Ollama runtime settings.
+# Keep the regular launcher independent of Langfuse. Tracing is enabled only
+# when the dedicated wrapper exports TRACE_TO_LANGFUSE=true, or when the user
+# explicitly opts in.
 export OPENCODE_CONFIG="${OPENCODE_CONFIG:-$REPO_DIR/opencode.json}"
 SELECTED_MODEL="$MODEL"
 SELECTED_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH"
@@ -35,19 +44,6 @@ SELECTED_WARMUP_TIMEOUT="$OPENCODE_WARMUP_TIMEOUT"
 SELECTED_OPENCODE_CONFIG="$OPENCODE_CONFIG"
 source "$SCRIPT_DIR/../lib/ollama.sh"
 export OLLAMA_HOST
-
-# Direct starts should use the local Langfuse project automatically when its
-# project keys are configured. start_tracing.sh already exports this flag and
-# credentials, so this remains idempotent for both entry points.
-if [ "${TRACE_TO_LANGFUSE:-}" != "true" ] && [ -f "$LANGFUSE_ENV" ]; then
-    source "$LANGFUSE_ENV"
-    if [ -n "${LANGFUSE_PUBLIC_KEY:-}" ] \
-        && [ -n "${LANGFUSE_SECRET_KEY:-}" ] \
-        && [[ "$LANGFUSE_PUBLIC_KEY" != *CHANGEME* ]] \
-        && [[ "$LANGFUSE_SECRET_KEY" != *CHANGEME* ]]; then
-        export TRACE_TO_LANGFUSE=true
-    fi
-fi
 
 MODEL="$SELECTED_MODEL"
 OLLAMA_CONTEXT_LENGTH="$SELECTED_CONTEXT_LENGTH"
@@ -79,6 +75,9 @@ if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
     chmod 600 "$OPENCODE_LANGFUSE_CONFIG"
 
     echo "Langfuse tracing enabled."
+else
+    unset OPENCODE_CONFIG_CONTENT
+    echo "Langfuse tracing disabled."
 fi
 
 export OLLAMA_HOST
@@ -161,7 +160,7 @@ LLAMA_ARG_FIT_TARGET=8000 \
 OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
-    ollama_start_or_reuse
+    ollama_start_fresh
 
 
 # Keep config-relative instruction paths rooted at the repository, including
@@ -190,6 +189,8 @@ fi
 echo
 echo "Warming up Ollama model..."
 if ! curl -sf "$OLLAMA_API_URL/api/generate" \
+    --connect-timeout 5 \
+    --max-time "$OLLAMA_WARMUP_TIMEOUT" \
     -H 'Content-Type: application/json' \
     -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
     >/dev/null; then

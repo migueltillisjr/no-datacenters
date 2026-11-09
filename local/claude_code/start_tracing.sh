@@ -26,6 +26,11 @@ fi
 LANGFUSE_BASE_URL="${LANGFUSE_BASE_URL:-http://localhost:3000}"
 export TRACE_TO_LANGFUSE=true LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY LANGFUSE_BASE_URL
 
+# Keep the observability plugin out of the user's normal Claude configuration.
+CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$SCRIPT_DIR/.claude_tracing_home}"
+export CLAUDE_CONFIG_DIR
+mkdir -p "$CLAUDE_CONFIG_DIR"
+
 if ! command -v claude >/dev/null 2>&1; then
     if ! command -v npm >/dev/null 2>&1; then
         echo "Claude Code is not installed and npm is unavailable." >&2

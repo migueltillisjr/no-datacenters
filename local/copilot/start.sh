@@ -16,6 +16,15 @@ fi
 
 source "$VENV_DIR/bin/activate"
 
+# Regular launches are deliberately non-tracing. The tracing wrapper is the
+# only entry point that exports the Langfuse OTLP settings.
+if [ "${TRACE_TO_LANGFUSE:-false}" != "true" ]; then
+    unset TRACE_TO_LANGFUSE LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY \
+        LANGFUSE_BASE_URL LANGFUSE_BASEURL COPILOT_OTEL_ENABLED \
+        OTEL_EXPORTER_OTLP_ENDPOINT OTEL_EXPORTER_OTLP_HEADERS \
+        OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT
+fi
+
 # The Copilot integration below is still a work in progress.
 
 # MODEL="${MODEL:-qwen3:4b-instruct}"

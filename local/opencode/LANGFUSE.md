@@ -63,6 +63,8 @@ Langfuse plugin supports that credential file as well as environment
 variables. Review the traces in the Langfuse project and avoid enabling
 tracing for sensitive sessions.
 
-`local/opencode/start.sh` configures tracing but does not manage Docker
-containers. Use `local/opencode/start_tracing.sh` when the local Langfuse
-Compose stack should be started automatically.
+`local/opencode/start.sh` uses a non-tracing configuration by default. Set
+`TRACE_TO_LANGFUSE=true` only when an already-running Langfuse endpoint should
+receive traces; it does not manage Docker containers. Use
+`local/opencode/start_tracing.sh` when the local Langfuse Compose stack should
+be started automatically.

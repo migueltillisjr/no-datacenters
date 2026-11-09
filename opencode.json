@@ -4,9 +4,6 @@
   "instructions": [
     "local/opencode/AGENTS.md"
   ],
-  "plugins": [
-    "@langfuse/opencode-observability-plugin@latest"
-  ],
   "providers": {
     "ollama": {
       "name": "Ollama",

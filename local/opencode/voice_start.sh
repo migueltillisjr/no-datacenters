@@ -19,6 +19,7 @@ START_THRESHOLD="${START_THRESHOLD:--45dB}"
 OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
 OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
 OLLAMA_LOG_FILE="${OLLAMA_LOG_FILE:-${TMPDIR:-/tmp}/ollama-opencode-voice.log}"
+OLLAMA_WARMUP_TIMEOUT="${OLLAMA_WARMUP_TIMEOUT:-30}"
 WORK_DIR="${TMPDIR:-/tmp}/opencode-voice"
 FFMPEG_LOG_FILE="$WORK_DIR/ffmpeg.log"
 
@@ -100,7 +101,7 @@ LLAMA_ARG_FIT_TARGET=2048 \
 OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
-    ollama_start_or_reuse
+    ollama_start_fresh
 
 if ! ollama list | awk 'NR > 1 {print $1}' | grep -Fxq "$MODEL"; then
     echo "Downloading Ollama model $MODEL..."
@@ -111,6 +112,8 @@ fi
 # pay the model startup cost. Keep it resident for the whole voice session.
 echo "Warming up Ollama model..."
 if ! curl -sf "$OLLAMA_API_URL/api/generate" \
+    --connect-timeout 5 \
+    --max-time "$OLLAMA_WARMUP_TIMEOUT" \
     -H 'Content-Type: application/json' \
     -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
     >/dev/null; then
