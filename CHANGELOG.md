@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.6 - 2026-11-08
+
+### Added
+
+- Added the Apache License, Version 2.0 in `LICENSE`.
+- Added a `NOTICE` file identifying Miguel Tillis as the copyright holder.
+
+### Changed
+
+- Updated the root `README.md` with the repository license and attribution
+  requirements.
+
 ## 1.0.5 - 2026-11-08
 
 ### Progress
