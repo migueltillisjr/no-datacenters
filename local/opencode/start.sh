@@ -4,7 +4,7 @@
 # Usage:   ./local/opencode/start.sh
 # Example: MODEL=qwen2.5-coder:7b ./local/opencode/start.sh
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.opencode_venv"
@@ -23,6 +23,16 @@ OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
 OLLAMA_BASE_URL="http://${OLLAMA_HOST%/}/v1"
 OPENCODE_WARMUP_TIMEOUT="${OPENCODE_WARMUP_TIMEOUT:-10}"
 OLLAMA_LOG_FILE="${OLLAMA_LOG_FILE:-${TMPDIR:-/tmp}/ollama-opencode.log}"
+
+# Langfuse .env contains credentials, but sourcing it must not replace the
+# launcher-selected model or Ollama runtime settings.
+export OPENCODE_CONFIG="${OPENCODE_CONFIG:-$REPO_DIR/opencode.json}"
+SELECTED_MODEL="$MODEL"
+SELECTED_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH"
+SELECTED_OLLAMA_HOST="$OLLAMA_HOST"
+SELECTED_OLLAMA_LOG_FILE="$OLLAMA_LOG_FILE"
+SELECTED_WARMUP_TIMEOUT="$OPENCODE_WARMUP_TIMEOUT"
+SELECTED_OPENCODE_CONFIG="$OPENCODE_CONFIG"
 source "$SCRIPT_DIR/../lib/ollama.sh"
 export OLLAMA_HOST
 
@@ -39,6 +49,15 @@ if [ "${TRACE_TO_LANGFUSE:-}" != "true" ] && [ -f "$LANGFUSE_ENV" ]; then
     fi
 fi
 
+MODEL="$SELECTED_MODEL"
+OLLAMA_CONTEXT_LENGTH="$SELECTED_CONTEXT_LENGTH"
+OLLAMA_HOST="$SELECTED_OLLAMA_HOST"
+OLLAMA_LOG_FILE="$SELECTED_OLLAMA_LOG_FILE"
+OPENCODE_WARMUP_TIMEOUT="$SELECTED_WARMUP_TIMEOUT"
+OPENCODE_CONFIG="$SELECTED_OPENCODE_CONFIG"
+OLLAMA_BASE_URL="http://${OLLAMA_HOST%/}/v1"
+export OLLAMA_HOST OPENCODE_CONFIG
+
 if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
     : "${LANGFUSE_PUBLIC_KEY:?Set LANGFUSE_PUBLIC_KEY in langfuse/.env}"
     : "${LANGFUSE_SECRET_KEY:?Set LANGFUSE_SECRET_KEY in langfuse/.env}"
@@ -46,8 +65,6 @@ if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
     export LANGFUSE_PUBLIC_KEY LANGFUSE_SECRET_KEY LANGFUSE_BASEURL
     export LANGFUSE_ENVIRONMENT="${LANGFUSE_ENVIRONMENT:-development}"
     export LANGFUSE_USER_ID="${LANGFUSE_USER_ID:-harness}"
-    export OPENCODE_CONFIG="opencode.json"
-
     OPENCODE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
     OPENCODE_LANGFUSE_CONFIG="$OPENCODE_CONFIG_DIR/opencode-langfuse.json"
     mkdir -p "$OPENCODE_CONFIG_DIR"
@@ -61,9 +78,6 @@ if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
         > "$OPENCODE_LANGFUSE_CONFIG"
     chmod 600 "$OPENCODE_LANGFUSE_CONFIG"
 
-    if [ -x "$REPO_DIR/langfuse/start.sh" ]; then
-        "$REPO_DIR/langfuse/start.sh"
-    fi
     echo "Langfuse tracing enabled."
 fi
 
@@ -118,9 +132,9 @@ if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
     OPENCODE_MAJOR="${OPENCODE_VERSION%%.*}"
 
     if [ "$OPENCODE_MAJOR" -ge 2 ] 2>/dev/null; then
-        export OPENCODE_CONFIG_CONTENT="{\"model\":\"$OPENCODE_MODEL\",\"plugins\":[\"@langfuse/opencode-observability-plugin@latest\"],\"providers\":{\"ollama\":{\"name\":\"Ollama\",\"package\":\"@opencode/ai/providers/openai-compatible\",\"settings\":{\"baseURL\":\"$OLLAMA_BASE_URL\",\"apiKey\":\"ollama\"}}}}"
+        export OPENCODE_CONFIG_CONTENT="{\"model\":\"$OPENCODE_MODEL\",\"instructions\":[\"local/opencode/AGENTS.md\"],\"plugins\":[\"@langfuse/opencode-observability-plugin@latest\"],\"providers\":{\"ollama\":{\"name\":\"Ollama\",\"package\":\"@opencode/ai/providers/openai-compatible\",\"settings\":{\"baseURL\":\"$OLLAMA_BASE_URL\",\"apiKey\":\"ollama\"},\"models\":{\"qwen3:4b-instruct\":{\"name\":\"Qwen3 4B Instruct\",\"capabilities\":{\"tools\":true,\"input\":[\"text\"],\"output\":[\"text\"]},\"limit\":{\"context\":16384,\"output\":4096}},\"qwen2.5-coder:7b\":{\"name\":\"Qwen 2.5 Coder 7B\",\"capabilities\":{\"tools\":true,\"input\":[\"text\"],\"output\":[\"text\"]},\"limit\":{\"context\":16384,\"output\":4096}}}}}}"
     else
-        export OPENCODE_CONFIG_CONTENT="{\"model\":\"$OPENCODE_MODEL\",\"plugin\":[\"@langfuse/opencode-observability-plugin@latest\"],\"provider\":{\"ollama\":{\"npm\":\"@ai-sdk/openai-compatible\",\"options\":{\"baseURL\":\"$OLLAMA_BASE_URL\",\"apiKey\":\"ollama\"}}}}"
+        export OPENCODE_CONFIG_CONTENT="{\"model\":\"$OPENCODE_MODEL\",\"instructions\":[\"local/opencode/AGENTS.md\"],\"plugin\":[\"@langfuse/opencode-observability-plugin@latest\"],\"provider\":{\"ollama\":{\"npm\":\"@ai-sdk/openai-compatible\",\"options\":{\"baseURL\":\"$OLLAMA_BASE_URL\",\"apiKey\":\"ollama\"},\"models\":{\"qwen3:4b-instruct\":{\"name\":\"Qwen3 4B Instruct\",\"capabilities\":{\"tools\":true,\"input\":[\"text\"],\"output\":[\"text\"]},\"limit\":{\"context\":16384,\"output\":4096}},\"qwen2.5-coder:7b\":{\"name\":\"Qwen 2.5 Coder 7B\",\"capabilities\":{\"tools\":true,\"input\":[\"text\"],\"output\":[\"text\"]},\"limit\":{\"context\":16384,\"output\":4096}}}}}}"
     fi
 
     echo "Langfuse tracing enabled for OpenCode $OPENCODE_VERSION."
@@ -149,6 +163,10 @@ OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
     ollama_start_or_reuse
 
+
+# Keep config-relative instruction paths rooted at the repository, including
+# during the warm-up request before the interactive session starts.
+cd "$REPO_DIR"
 
 # -----------------------------
 # Pull model if necessary
@@ -222,6 +240,7 @@ opencode --version || true
 # Launch OpenCode
 # -----------------------------
 echo
+cd "$REPO_DIR"
 echo "Launching OpenCode..."
 echo "Model: $MODEL"
 echo

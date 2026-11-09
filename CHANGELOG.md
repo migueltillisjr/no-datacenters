@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.0.12 - 2026-11-09
+
+### Fixed
+
+- Kept Langfuse container startup confined to the dedicated `start_tracing.sh`
+  wrappers, so regular harness launchers do not require Docker when tracing is
+  configured against an already-running endpoint.
+
+## 1.0.11 - 2026-11-09
+
+### Fixed
+
+- Prevented Langfuse `.env` values from overriding the OpenCode launcher’s
+  selected model and Ollama runtime settings.
+
+## 1.0.10 - 2026-11-09
+
+### Fixed
+
+- Declared explicit text input, text output, and tool capabilities for the
+  configured Ollama models so OpenCode can treat them as tool-capable models.
+- Added local OpenCode guidance to use tools for repository operations instead
+  of returning command-only instructions.
+
+## 1.0.9 - 2026-11-09
+
+### Changed
+
+- Configured OpenCode to load `local/opencode/AGENTS.md` as default project
+  instructions.
+- Added a Markdown-response requirement to the OpenCode instructions.
+- Updated OpenCode launchers to select the repository configuration reliably
+  from any working directory.
+
 ## 1.0.8 - 2026-11-09
 
 ### Changed

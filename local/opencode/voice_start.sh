@@ -23,6 +23,8 @@ WORK_DIR="${TMPDIR:-/tmp}/opencode-voice"
 FFMPEG_LOG_FILE="$WORK_DIR/ffmpeg.log"
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/ollama.sh"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+export OPENCODE_CONFIG="${OPENCODE_CONFIG:-$REPO_DIR/opencode.json}"
 export OLLAMA_HOST
 
 mkdir -p "$WORK_DIR" "$(dirname "$WHISPER_MODEL_PATH")"
@@ -189,5 +191,5 @@ while true; do
 
     echo "Command: $TEXT"
     echo "Sending to OpenCode..."
-    opencode run --model "$OPENCODE_MODEL" "$TEXT"
+    (cd "$REPO_DIR" && opencode run --model "$OPENCODE_MODEL" "$TEXT")
 done

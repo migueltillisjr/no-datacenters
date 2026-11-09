@@ -1,3 +1,13 @@
+## Response format
+
+- Return Markdown in all responses moving forward.
+
+## Tool usage
+
+- When a request requires inspecting, editing, or validating the repository,
+  use the available tools instead of only describing the commands a user could
+  run.
+
 ## File Editing Rules
 
 When using the edit tool:
