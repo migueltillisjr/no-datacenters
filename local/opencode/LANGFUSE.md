@@ -5,10 +5,10 @@ compactions, failures, and session metadata to Langfuse.
 
 The Langfuse AI skill from `github.com/langfuse/skills` is installed at the
 repository-level `.opencode/skills/langfuse/` directory. OpenCode discovers it
-because `start_tracing.sh` launches the harness from the repository root. The
-harness-local `opencode.json` is selected explicitly by the launcher and
-declares the Langfuse plugin and loopback Ollama provider, so the plugin
-remains enabled when OpenCode is launched through Ollama.
+because the launcher runs from the repository root. The root `opencode.json`
+explicitly loads `local/opencode/AGENTS.md` and declares the Langfuse plugin
+and loopback Ollama provider, so the plugin and project instructions remain
+enabled when OpenCode is launched through Ollama.
 
 For an automated setup that starts Langfuse, configures the version-appropriate
 OpenCode plugin key, and launches OpenCode, run:
@@ -19,7 +19,8 @@ OpenCode plugin key, and launches OpenCode, run:
 
 ## Prerequisites
 
-1. Start Langfuse with `langfuse/start.sh`.
+1. Start Langfuse with `langfuse/start.sh`, or point `LANGFUSE_BASEURL` at an
+   already-running Langfuse instance.
 2. Open `http://localhost:3000` and create a Langfuse project.
 3. Copy the project's public and secret keys.
 
@@ -61,3 +62,7 @@ session. At startup it writes the values from `langfuse/.env` to
 Langfuse plugin supports that credential file as well as environment
 variables. Review the traces in the Langfuse project and avoid enabling
 tracing for sensitive sessions.
+
+`local/opencode/start.sh` configures tracing but does not manage Docker
+containers. Use `local/opencode/start_tracing.sh` when the local Langfuse
+Compose stack should be started automatically.

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Purpose: Create the OpenCode integration's Python 3 virtual environment.
+# Usage:   ./local/opencode/setup_python.sh
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

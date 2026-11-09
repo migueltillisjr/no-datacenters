@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Purpose: Start local Langfuse and launch OpenCode with tracing enabled.
+# Usage:   ./local/opencode/start_tracing.sh
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -46,7 +49,7 @@ echo "Langfuse credentials configured at $OPENCODE_LANGFUSE_CONFIG."
 export TRACE_TO_LANGFUSE=true
 # The launcher starts from the repository root, so explicitly select the
 # harness-local OpenCode config instead of relying on cwd-based discovery.
-export OPENCODE_CONFIG="opencode.json"
+export OPENCODE_CONFIG="${OPENCODE_CONFIG:-$REPO_DIR/opencode.json}"
 
 cd "$REPO_DIR"
 exec "$SCRIPT_DIR/start.sh"

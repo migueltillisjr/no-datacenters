@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Purpose: Start Langfuse and launch Codex with tracing enabled.
+# Usage:   ./local/codex/start_tracing.sh
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

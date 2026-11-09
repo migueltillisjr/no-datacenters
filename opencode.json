@@ -1,6 +1,9 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "{env:OPENCODE_MODEL}",
+  "instructions": [
+    "local/opencode/AGENTS.md"
+  ],
   "plugins": [
     "@langfuse/opencode-observability-plugin@latest"
   ],
@@ -15,6 +18,11 @@
       "models": {
         "qwen3:4b-instruct": {
           "name": "Qwen3 4B Instruct",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
           "limit": {
             "context": 16384,
             "output": 4096
@@ -22,6 +30,11 @@
         },
         "qwen2.5-coder:7b": {
           "name": "Qwen 2.5 Coder 7B",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
           "limit": {
             "context": 16384,
             "output": 4096

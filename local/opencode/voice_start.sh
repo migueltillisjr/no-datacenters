@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Purpose: Record microphone input, transcribe it locally, and send it to OpenCode.
+# Usage:   ./local/opencode/voice_start.sh
+# Example: AUDIO_INPUT=:2 ./local/opencode/voice_start.sh
+
 set -euo pipefail
 
 MODEL="${MODEL:-qwen3:4b-instruct}"
@@ -13,8 +17,15 @@ SILENCE_DURATION="${SILENCE_DURATION:-1.2}"
 SILENCE_THRESHOLD="${SILENCE_THRESHOLD:--35dB}"
 START_THRESHOLD="${START_THRESHOLD:--45dB}"
 OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
+OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
+OLLAMA_LOG_FILE="${OLLAMA_LOG_FILE:-${TMPDIR:-/tmp}/ollama-opencode-voice.log}"
 WORK_DIR="${TMPDIR:-/tmp}/opencode-voice"
 FFMPEG_LOG_FILE="$WORK_DIR/ffmpeg.log"
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../lib/ollama.sh"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+export OPENCODE_CONFIG="${OPENCODE_CONFIG:-$REPO_DIR/opencode.json}"
+export OLLAMA_HOST
 
 mkdir -p "$WORK_DIR" "$(dirname "$WHISPER_MODEL_PATH")"
 
@@ -66,7 +77,6 @@ fi
 # -----------------------------
 # Ollama lifecycle
 # -----------------------------
-OLLAMA_PID=""
 FFMPEG_PID=""
 
 cleanup() {
@@ -75,18 +85,11 @@ cleanup() {
         kill -INT "$FFMPEG_PID" 2>/dev/null || true
     fi
 
-    if [ -n "$OLLAMA_PID" ]; then
-        echo "Stopping Ollama..."
-        kill "$OLLAMA_PID" 2>/dev/null || true
-    fi
+    ollama_cleanup
 }
 
 trap cleanup EXIT
 trap 'exit 130' INT TERM
-
-echo "Stopping existing Ollama server..."
-pkill -f "ollama serve" 2>/dev/null || true
-sleep 1
 
 echo
 echo "Starting Ollama..."
@@ -97,30 +100,7 @@ LLAMA_ARG_FIT_TARGET=2048 \
 OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
-ollama serve > /tmp/ollama.log 2>&1 &
-
-OLLAMA_PID=$!
-
-echo "Waiting for Ollama API..."
-for i in {1..30}; do
-    if curl -sf http://localhost:11434/api/tags >/dev/null; then
-        break
-    fi
-
-    if ! kill -0 "$OLLAMA_PID" 2>/dev/null; then
-        echo "Ollama failed to start."
-        cat /tmp/ollama.log
-        exit 1
-    fi
-
-    sleep 1
-done
-
-if ! curl -sf http://localhost:11434/api/tags >/dev/null; then
-    echo "Ollama did not become ready."
-    cat /tmp/ollama.log
-    exit 1
-fi
+    ollama_start_or_reuse
 
 if ! ollama list | awk 'NR > 1 {print $1}' | grep -Fxq "$MODEL"; then
     echo "Downloading Ollama model $MODEL..."
@@ -130,7 +110,7 @@ fi
 # Load the model before the first voice command so the first response does not
 # pay the model startup cost. Keep it resident for the whole voice session.
 echo "Warming up Ollama model..."
-if ! curl -sf http://localhost:11434/api/generate \
+if ! curl -sf "$OLLAMA_API_URL/api/generate" \
     -H 'Content-Type: application/json' \
     -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
     >/dev/null; then
@@ -211,5 +191,5 @@ while true; do
 
     echo "Command: $TEXT"
     echo "Sending to OpenCode..."
-    opencode run --model "$OPENCODE_MODEL" "$TEXT"
+    (cd "$REPO_DIR" && opencode run --model "$OPENCODE_MODEL" "$TEXT")
 done

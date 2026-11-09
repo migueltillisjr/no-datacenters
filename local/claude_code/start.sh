@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Purpose: Start Claude Code with a local Ollama model and managed settings.
+# Usage:   ./local/claude_code/start.sh
+# Example: MODEL=qwen3:4b-instruct ./local/claude_code/start.sh
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,8 +18,10 @@ source "$VENV_DIR/bin/activate"
 MODEL="${MODEL:-qwen3:4b-instruct}"
 OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
 LLAMA_ARG_FIT_TARGET="${LLAMA_ARG_FIT_TARGET:-10000}"
-OLLAMA_LOG_FILE="/tmp/ollama-claude-code.log"
-OLLAMA_PID=""
+OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
+OLLAMA_LOG_FILE="${OLLAMA_LOG_FILE:-${TMPDIR:-/tmp}/ollama-claude-code.log}"
+source "$SCRIPT_DIR/../lib/ollama.sh"
+export OLLAMA_HOST
 
 export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
 
@@ -35,17 +41,10 @@ fi
 
 cleanup() {
     echo
-    if [ -n "$OLLAMA_PID" ]; then
-        echo "Stopping Ollama..."
-        kill "$OLLAMA_PID" 2>/dev/null || true
-    fi
+    ollama_cleanup
 }
 
 trap cleanup EXIT INT TERM
-
-echo "Stopping existing Ollama server..."
-pkill -f "ollama serve" 2>/dev/null || true
-sleep 1
 
 echo "Starting Ollama for Claude Code..."
 echo "Model:              $MODEL"
@@ -57,30 +56,7 @@ LLAMA_ARG_FIT_TARGET="$LLAMA_ARG_FIT_TARGET" \
 OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \
-ollama serve >"$OLLAMA_LOG_FILE" 2>&1 &
-
-OLLAMA_PID=$!
-
-echo "Waiting for Ollama API..."
-for i in {1..30}; do
-    if curl -sf http://localhost:11434/api/tags >/dev/null; then
-        break
-    fi
-
-    if ! kill -0 "$OLLAMA_PID" 2>/dev/null; then
-        echo "Ollama failed to start. Check $OLLAMA_LOG_FILE."
-        cat "$OLLAMA_LOG_FILE"
-        exit 1
-    fi
-
-    sleep 1
-done
-
-if ! curl -sf http://localhost:11434/api/tags >/dev/null; then
-    echo "Ollama did not become ready. Check $OLLAMA_LOG_FILE."
-    cat "$OLLAMA_LOG_FILE"
-    exit 1
-fi
+    ollama_start_or_reuse
 
 if ! ollama list | awk 'NR > 1 {print $1}' | grep -Fxq "$MODEL"; then
     echo "Downloading Ollama model $MODEL..."
@@ -88,7 +64,7 @@ if ! ollama list | awk 'NR > 1 {print $1}' | grep -Fxq "$MODEL"; then
 fi
 
 echo "Warming up Ollama model..."
-if ! curl -sf http://localhost:11434/api/generate \
+if ! curl -sf "$OLLAMA_API_URL/api/generate" \
     -H 'Content-Type: application/json' \
     -d "{\"model\":\"$MODEL\",\"prompt\":\"Reply with OK.\",\"stream\":false,\"keep_alive\":-1,\"think\":false,\"options\":{\"num_predict\":1}}" \
     >/dev/null; then

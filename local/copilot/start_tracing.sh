@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Purpose: Start Langfuse and launch GitHub Copilot CLI with OTLP tracing.
+# Usage:   ./local/copilot/start_tracing.sh
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
