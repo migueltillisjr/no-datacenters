@@ -1,0 +1,4 @@
+- Authenticated Ollama server
+    - HTTTPS
+    - Basic authentication
+    - Reverse proxy, apache2
