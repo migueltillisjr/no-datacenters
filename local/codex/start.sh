@@ -2,7 +2,7 @@
 
 # Purpose: Start Codex with a local Ollama model and managed settings.
 # Usage:   ./local/codex/start.sh
-# Example: MODEL=qwen2.5-coder:7b ./local/codex/start.sh
+# Example: MODEL=qwen3:4b-instruct ./local/codex/start.sh
 
 set -euo pipefail
 

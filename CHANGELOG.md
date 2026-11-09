@@ -8,6 +8,11 @@
   wrappers, so regular harness launchers do not require Docker when tracing is
   configured against an already-running endpoint.
 
+### Changed
+
+- Standardized the documented default model across supported local harnesses on
+  `qwen3:4b-instruct`.
+
 ## 1.0.11 - 2026-11-09
 
 ### Fixed

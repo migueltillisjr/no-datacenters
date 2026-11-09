@@ -2,7 +2,7 @@
 
 # Purpose: Start Claude Code with a local Ollama model and managed settings.
 # Usage:   ./local/claude_code/start.sh
-# Example: MODEL=qwen2.5-coder:7b ./local/claude_code/start.sh
+# Example: MODEL=qwen3:4b-instruct ./local/claude_code/start.sh
 
 set -euo pipefail
 

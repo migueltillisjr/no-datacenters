@@ -48,7 +48,7 @@ opens the selected harness. The default model is `qwen3:4b-instruct`.
 To select another model already available in Ollama, set `MODEL`:
 
 ```bash
-MODEL=qwen2.5-coder:7b ./local/codex/start.sh
+MODEL=qwen3:4b-instruct ./local/codex/start.sh
 ```
 
 The launchers accept additional environment variables such as

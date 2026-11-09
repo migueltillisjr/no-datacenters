@@ -2,7 +2,7 @@
 
 # Purpose: Start OpenCode with a local Ollama model and optional Langfuse tracing.
 # Usage:   ./local/opencode/start.sh
-# Example: MODEL=qwen2.5-coder:7b ./local/opencode/start.sh
+# Example: MODEL=qwen3:4b-instruct ./local/opencode/start.sh
 
 set -euo pipefail
 
@@ -154,10 +154,10 @@ echo "Checking Ollama at $OLLAMA_API_URL..."
 echo "Model:              $MODEL"
 echo "Context:            $OLLAMA_CONTEXT_LENGTH"
 echo "Endpoint:           http://$OLLAMA_HOST"
-echo "RAM reserve target: 4000 MB"
+echo "RAM reserve target: 8000 MB"
 echo "Parallel requests:  1"
 
-LLAMA_ARG_FIT_TARGET=4000 \
+LLAMA_ARG_FIT_TARGET=8000 \
 OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
 OLLAMA_NUM_PARALLEL=1 \
 OLLAMA_KEEP_ALIVE=-1 \

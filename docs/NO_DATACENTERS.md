@@ -11,7 +11,7 @@ On macOS:
 ```bash
 brew install ollama
 ollama --version
-ollama pull qwen2.5-coder:7b
+ollama pull qwen3:4b-instruct
 ```
 
 Use Ollama `v0.15+` for the `ollama launch` commands below.
@@ -33,7 +33,7 @@ does not pay the model-load cost:
 ```bash
 curl -sf http://localhost:11434/api/generate \
   -H 'Content-Type: application/json' \
-  -d '{"model":"qwen2.5-coder:7b","prompt":"Reply with OK.","stream":false,"keep_alive":-1,"think":false,"options":{"num_predict":1}}' \
+  -d '{"model":"qwen3:4b-instruct","prompt":"Reply with OK.","stream":false,"keep_alive":-1,"think":false,"options":{"num_predict":1}}' \
   >/dev/null
 ```
 
@@ -138,7 +138,7 @@ Override the model or shared settings when needed:
 
 ```bash
 cd local/claude_code
-MODEL=qwen2.5-coder:7b OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
+MODEL=qwen3:4b-instruct OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
 ```
 
 Ollama configures Claude Code to use its local Anthropic-compatible endpoint.
@@ -161,7 +161,7 @@ Override the model or shared settings when needed:
 
 ```bash
 cd local/codex
-MODEL=qwen2.5-coder:7b OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
+MODEL=qwen3:4b-instruct OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
 ```
 
 Ollama creates a Codex launch profile that routes model requests to the local
@@ -170,7 +170,7 @@ Ollama API. Codex still reads `AGENTS.md` for repository instructions.
 You can also launch Codex in Ollama's open-source model mode directly:
 
 ```bash
-codex --oss -m qwen2.5-coder:7b
+codex --oss -m qwen3:4b-instruct
 ```
 
 Use `ollama launch codex --config` to configure without starting Codex, or
@@ -227,9 +227,9 @@ paying the model-load cost on the first prompt.
 
 | Harness | Ollama launch command | Model |
 | --- | --- | --- |
-| Claude Code | Shared settings + `ollama launch claude --model ...` | `qwen2.5-coder:7b` |
-| Codex | Shared settings + `ollama launch codex --model ...` | `qwen2.5-coder:7b` |
-| OpenCode | Shared settings + `ollama launch opencode --model ...` | `qwen2.5-coder:7b` |
+| Claude Code | Shared settings + `ollama launch claude --model ...` | `qwen3:4b-instruct` |
+| Codex | Shared settings + `ollama launch codex --model ...` | `qwen3:4b-instruct` |
+| OpenCode | Shared settings + `ollama launch opencode --model ...` | `qwen3:4b-instruct` |
 
 References: [Ollama Launch](https://ollama.com/blog/launch), [Ollama Codex integration](https://github.com/ollama/ollama/blob/main/docs/integrations/codex.mdx),
 [Ollama Claude Code integration](https://github.com/ollama/ollama/blob/main/docs/integrations/claude-code.mdx),
