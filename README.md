@@ -52,8 +52,8 @@ MODEL=qwen2.5-coder:7b ./local/codex/start.sh
 ```
 
 The launchers accept additional environment variables such as
-`OLLAMA_CONTEXT_LENGTH`; see [NO_DATACENTERS.md](./NO_DATACENTERS.md) for the
-shared Ollama setup and performance guidance.
+`OLLAMA_CONTEXT_LENGTH`; see [docs/NO_DATACENTERS.md](./docs/NO_DATACENTERS.md)
+for the shared Ollama setup and performance guidance.
 
 ## OpenCode voice workflow
 
@@ -126,7 +126,9 @@ only when the stored Langfuse data can be discarded.
 | [`local/codex/`](./local/codex/) | Codex launcher and tracing wrapper |
 | [`local/copilot/`](./local/copilot/) | GitHub Copilot CLI tracing integration |
 | [`langfuse/`](./langfuse/) | Self-hosted Langfuse Compose deployment |
-| [`NO_DATACENTERS.md`](./NO_DATACENTERS.md) | Detailed local-model harness instructions |
+| [`docs/NO_DATACENTERS.md`](./docs/NO_DATACENTERS.md) | Detailed local-model harness instructions |
+| [`docs/TASKS.md`](./docs/TASKS.md) | Current project tasks and definition of done |
+| [`docs/IMPROVEMENTS.md`](./docs/IMPROVEMENTS.md) | Prioritized robustness and maintainability plan |
 | [`CHANGELOG.md`](./CHANGELOG.md) | Release notes and implementation history |
 
 ## Configuration and security
