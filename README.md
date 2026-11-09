@@ -31,7 +31,7 @@ configuration.
 
 ## Quick start
 
-**NOTE:** With harnesses can take a while to warm up... but once they do, they work at a decent speed.
+**NOTE:** Harnesses can take a while to warm up... but once they do, they work at a decent speed.
 
 From the repository root, choose a harness:
 
