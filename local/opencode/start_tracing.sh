@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Purpose: Start Langfuse and launch OpenCode with tracing enabled.
+# Usage:   ./local/opencode/start_tracing.sh
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.0.8 - 2026-11-09
+
+### Changed
+
+- Added purpose and usage headers to every repository-maintained script.
+
+## 1.0.7 - 2026-11-09
+
+### Added
+
+- Added shared Ollama lifecycle helpers under `local/lib/ollama.sh`.
+- Added safe repository validation through `scripts/check.sh`, including shell
+  syntax, secret, Markdown link, and optional Compose checks.
+- Added an Ollama lifecycle smoke test under `tests/`.
+
+### Changed
+
+- Updated Claude Code, Codex, OpenCode, and voice launchers to reuse healthy
+  Ollama servers and stop only processes they started.
+- Fixed stale `docs/NO_DATACENTERS.md` paths after the documentation move.
+- Documented the validation command and completed robustness tasks in the
+  project documentation.
+
 ## 1.0.6 - 2026-11-08
 
 ### Added

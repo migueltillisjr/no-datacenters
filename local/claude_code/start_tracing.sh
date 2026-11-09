@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Purpose: Start Langfuse and launch Claude Code with tracing enabled.
+# Usage:   ./local/claude_code/start_tracing.sh
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

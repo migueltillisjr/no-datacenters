@@ -20,19 +20,21 @@ For the detailed hardening proposal and recommended order, see
 
 ### Reliability
 
-- [ ] Add shell linting and syntax checks for every `*.sh` file.
-- [ ] Add smoke tests for launcher prerequisites, environment validation,
-      model selection, and cleanup behavior.
+- [x] Add shell syntax checks and a safe local validation command in
+      `scripts/check.sh`.
+- [x] Add a lifecycle smoke test covering reuse and cleanup of launcher-owned
+      Ollama processes.
+- [ ] Add smoke tests for launcher prerequisites, environment validation, and
+      model selection.
 - [ ] Replace duplicated launcher lifecycle code with a shared, tested helper
       or document the intentional differences between launchers.
-- [ ] Make process ownership explicit so a launcher cannot stop an unrelated
+- [x] Make process ownership explicit so a launcher cannot stop an unrelated
       Ollama server.
 - [ ] Add health checks and timeout diagnostics for all external services.
 
 ### Security and privacy
 
-- [ ] Add an automated check that rejects committed `.env` files and obvious
-      secrets.
+- [x] Add local checks for committed environment files and obvious secrets.
 - [ ] Review every subprocess and download command before allowing automatic
       installation or model downloads.
 - [ ] Pin or document supported versions for Ollama, each harness, Docker
@@ -42,13 +44,13 @@ For the detailed hardening proposal and recommended order, see
 
 ### Developer experience
 
-- [ ] Add a single validation command that runs all safe checks locally.
+- [x] Add a single validation command that runs all safe checks locally.
 - [ ] Add CI for shell syntax, Markdown links, Compose configuration, and
       documentation consistency.
 - [ ] Add a troubleshooting guide for common macOS audio, Docker, and Ollama
       failures.
-- [ ] Keep the root README and detailed guides checked for broken relative
-      links whenever files move.
+- [x] Add a Markdown link checker and repair stale links after the `docs/`
+      move.
 
 ### Integrations
 

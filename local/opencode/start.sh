@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Purpose: Start OpenCode with a local Ollama model and optional Langfuse tracing.
+# Usage:   ./local/opencode/start.sh
+# Example: MODEL=qwen2.5-coder:7b ./local/opencode/start.sh
+
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,6 +22,9 @@ OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8000}"
 OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
 OLLAMA_BASE_URL="http://${OLLAMA_HOST%/}/v1"
 OPENCODE_WARMUP_TIMEOUT="${OPENCODE_WARMUP_TIMEOUT:-10}"
+OLLAMA_LOG_FILE="${OLLAMA_LOG_FILE:-${TMPDIR:-/tmp}/ollama-opencode.log}"
+source "$SCRIPT_DIR/../lib/ollama.sh"
+export OLLAMA_HOST
 
 # Direct starts should use the local Langfuse project automatically when its
 # project keys are configured. start_tracing.sh already exports this flag and
@@ -120,96 +127,27 @@ if [ "${TRACE_TO_LANGFUSE:-false}" = "true" ]; then
 fi
 
 
-# -----------------------------
-# Cleanup
-# -----------------------------
-OLLAMA_PID=""
-OLLAMA_STARTED_BY_SCRIPT=false
-
-ollama_ready() {
-    curl -sf "$OLLAMA_API_URL/api/tags" >/dev/null 2>&1
-}
-
 cleanup() {
     echo
-
-    if [ "$OLLAMA_STARTED_BY_SCRIPT" = true ] && [ -n "$OLLAMA_PID" ]; then
-        echo "Stopping Ollama..."
-        kill "$OLLAMA_PID" 2>/dev/null || true
-    fi
+    ollama_cleanup
 }
 
 trap cleanup EXIT INT TERM
 
 
-# -----------------------------
-# Reuse or start Ollama
-# -----------------------------
 echo
 echo "Checking Ollama at $OLLAMA_API_URL..."
+echo "Model:              $MODEL"
+echo "Context:            $OLLAMA_CONTEXT_LENGTH"
+echo "Endpoint:           http://$OLLAMA_HOST"
+echo "RAM reserve target: 4000 MB"
+echo "Parallel requests:  1"
 
-if ollama_ready; then
-    echo "Ollama is already running; reusing the existing server."
-elif pgrep -f '[o]llama serve' >/dev/null 2>&1; then
-    echo "Ollama is starting; waiting for the existing server..."
-
-    for i in {1..30}; do
-        if ollama_ready; then
-            break
-        fi
-        sleep 1
-    done
-
-    if ! ollama_ready; then
-        echo "An Ollama server process exists but did not become ready at $OLLAMA_API_URL." >&2
-        exit 1
-    fi
-
-    echo "Ollama ready; reusing the existing server."
-else
-    echo "Ollama is not running; starting a managed server."
-    echo "Model:              $MODEL"
-    echo "Context:            $OLLAMA_CONTEXT_LENGTH"
-    echo "Endpoint:           http://$OLLAMA_HOST"
-    echo "RAM reserve target: 4000 MB"
-    echo "Parallel requests:  1"
-
-    LLAMA_ARG_FIT_TARGET=4000 \
-    OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
-    OLLAMA_NUM_PARALLEL=1 \
-    OLLAMA_KEEP_ALIVE=-1 \
-    ollama serve > /tmp/ollama.log 2>&1 &
-
-    OLLAMA_PID=$!
-    OLLAMA_STARTED_BY_SCRIPT=true
-
-    echo "Waiting for Ollama API..."
-    for i in {1..30}; do
-        if ollama_ready; then
-            break
-        fi
-
-        if ! kill -0 "$OLLAMA_PID" 2>/dev/null; then
-            echo
-            echo "Ollama failed to start."
-            echo
-            cat /tmp/ollama.log
-            exit 1
-        fi
-
-        sleep 1
-    done
-
-    if ! ollama_ready; then
-        echo
-        echo "Ollama did not become ready at $OLLAMA_API_URL."
-        echo
-        cat /tmp/ollama.log
-        exit 1
-    fi
-
-    echo "Ollama ready."
-fi
+LLAMA_ARG_FIT_TARGET=4000 \
+OLLAMA_CONTEXT_LENGTH="$OLLAMA_CONTEXT_LENGTH" \
+OLLAMA_NUM_PARALLEL=1 \
+OLLAMA_KEEP_ALIVE=-1 \
+    ollama_start_or_reuse
 
 
 # -----------------------------

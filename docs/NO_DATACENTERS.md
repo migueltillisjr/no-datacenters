@@ -66,12 +66,12 @@ OpenCode is the harness wired directly to Ollama in this repository.
 Start the project voice workflow:
 
 ```bash
-cd opencode
+cd local/opencode
 chmod +x voice_start.sh
 ./voice_start.sh
 ```
 
-[`voice_start.sh`](./opencode/voice_start.sh) starts Ollama, pulls the model
+[`voice_start.sh`](../local/opencode/voice_start.sh) starts Ollama, pulls the model
 if needed, warms it up, transcribes the microphone input, and runs:
 
 ```bash
@@ -88,26 +88,26 @@ OPENCODE_MODEL=ollama/qwen3:4b-instruct
 To use another installed Ollama model:
 
 ```bash
-cd opencode
+cd local/opencode
 MODEL=llama3.2:3b ./voice_start.sh
 ```
 
 For a direct OpenCode session without voice input:
 
 ```bash
-cd opencode
+cd local/opencode
 opencode run --model ollama/qwen3:4b-instruct \
   "Explain the purpose of this repository."
 ```
 
 The project OpenCode agent is
-[`.opencode/agents/hello_world.md`](./.opencode/agents/hello_world.md). Its
+[`.opencode/agents/hello_world.md`](../.opencode/agents/hello_world.md). Its
 `model` field is set to `ollama/qwen3:4b-instruct`.
 
 For the non-voice startup path, use:
 
 ```bash
-cd opencode
+cd local/opencode
 MODEL=qwen3:4b-instruct OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
 ```
 
@@ -118,10 +118,10 @@ before opening the interactive session, warming both the model and harness
 integration path.
 
 The dedicated OpenCode launcher is also available at
-[`opencode/start.sh`](./opencode/start.sh):
+[`local/opencode/start.sh`](../local/opencode/start.sh):
 
 ```bash
-cd opencode
+cd local/opencode
 ./start.sh
 ```
 
@@ -130,14 +130,14 @@ cd opencode
 Install Claude Code if needed, then launch the configured local-model workflow:
 
 ```bash
-cd claude_code
+cd local/claude_code
 ./start.sh
 ```
 
 Override the model or shared settings when needed:
 
 ```bash
-cd claude_code
+cd local/claude_code
 MODEL=qwen2.5-coder:7b OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
 ```
 
@@ -153,14 +153,14 @@ files; selecting a local model does not change that instruction mechanism.
 Install Codex CLI if needed, then launch the configured local-model workflow:
 
 ```bash
-cd codex
+cd local/codex
 ./start.sh
 ```
 
 Override the model or shared settings when needed:
 
 ```bash
-cd codex
+cd local/codex
 MODEL=qwen2.5-coder:7b OLLAMA_CONTEXT_LENGTH=8192 ./start.sh
 ```
 
@@ -182,7 +182,7 @@ For a standalone OpenCode session using the same coding model, use the
 dedicated launcher:
 
 ```bash
-cd opencode
+cd local/opencode
 ./start.sh
 ```
 
@@ -190,14 +190,14 @@ The existing voice workflow uses OpenCode directly and defaults to
 `qwen3:4b-instruct` instead:
 
 ```bash
-cd opencode
+cd local/opencode
 MODEL=qwen3:4b-instruct ./voice_start.sh
 ```
 
 To run the voice workflow with the coding model:
 
 ```bash
-cd opencode
+cd local/opencode
 MODEL=qwen2.5-coder:7b ./voice_start.sh
 ```
 
@@ -215,7 +215,7 @@ OLLAMA_KEEP_ALIVE=-1
 Use a smaller model for faster CPU responses:
 
 ```bash
-cd opencode
+cd local/opencode
 MODEL=llama3.2:3b OLLAMA_CONTEXT_LENGTH=8138 ./voice_start.sh
 ```
 

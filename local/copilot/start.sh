@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Purpose: Report the current experimental status of the Copilot launcher.
+# Usage:   ./local/copilot/start.sh
+# Note:    The local-model implementation is not complete; use tracing mode
+#          only when the GitHub Copilot CLI is already configured.
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
