@@ -2,6 +2,7 @@
 ```yaml
 - agent_name: string
   agent_dir: string (filepath/bucket/url/git/...etc)
+  shared_tasks_connector: string (URI)
   validation_prompt: 
   validation_cmd: 
   autonomous_interval_seconds: 60
