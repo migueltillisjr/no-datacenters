@@ -22,6 +22,8 @@ For the detailed hardening proposal and recommended order, see
 
 - [x] Add shell syntax checks and a safe local validation command in
       `scripts/check.sh`.
+- [x] Add a local autonomous service with bounded status polling, retries,
+      timeouts, restart-safe result persistence, and durable event logs.
 - [x] Add a lifecycle smoke test covering reuse and cleanup of launcher-owned
       Ollama processes.
 - [ ] Add smoke tests for launcher prerequisites, environment validation, and

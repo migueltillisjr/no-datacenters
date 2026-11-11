@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.0.20 - 2026-11-10
+
+### Changed
+
+- Added autonomous service configuration values to `autonomous/DATA.md`.
+
+## 1.0.19 - 2026-11-10
+
+### Changed
+
+- Documented the supported unattended OpenCode workflow using `opencode run`
+  as the autonomous service's noninteractive result command.
+
+## 1.0.18 - 2026-11-10
+
+### Added
+
+- Added the dependency-free `autonomous/` service with bounded retries,
+  timeouts, atomic result persistence, signal handling, JSON-line logs, and
+  focused tests/documentation.
+
+## 1.0.17 - 2026-11-10
+
+### Added
+
+- Added an implementation prompt for a minimal long-running autonomous service
+  that reuses existing harnesses, performs bounded retries, and persists logs.
+
 ## 1.0.16 - 2026-11-09
 
 ### Fixed

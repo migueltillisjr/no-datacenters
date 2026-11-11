@@ -1,0 +1,11 @@
+{
+  "AUTONOMOUS_INTERVAL_SECONDS": 60,
+  "AUTONOMOUS_MAX_RETRIES": 3,
+  "AUTONOMOUS_TIMEOUT_SECONDS": 30,
+  "AUTONOMOUS_STATUS_COMMAND": "curl --fail --silent http://127.0.0.1:8765/status",
+  "AUTONOMOUS_RESULT_COMMAND": "curl --fail --silent http://127.0.0.1:8765/result",
+  "AUTONOMOUS_LOG_FILE": "./autonomous.log",
+  "AUTONOMOUS_RESULT_FILE": "./autonomous-result.txt",
+  "AUTONOMOUS_HARNESS": "",
+  "AUTONOMOUS_HARNESS_ARGS": ""
+}
