@@ -5,6 +5,10 @@ voice input, and self-hosted observability. The launchers in this repository
 keep model inference and speech-to-text on the local machine; Langfuse is an
 optional local Docker deployment for tracing.
 
+## Basically...
+
+AI, No tokens, No credits, No datacenters.
+
 ## What is included
 
 - Local Ollama launchers for Claude Code, Codex, and OpenCode.
